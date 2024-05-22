@@ -223,3 +223,118 @@ cd /etc/openssh
 пишем в свободной строке AllowUsers login@ip …(Перечисляем пользователей которые должны подключаться(Все кроме Cli))
 systemctl restart sshd
 
+
+
+
+
+
+
+Модуль 2 
+Задание 1
+HQ-SRV 
+vim /etc/bind/options.conf 
+Жмем ‘’insert’’
+Меняем в строке айпи на это : listen-on {  any; };
+				listen-on-v6 {  any; };
+в коментарии forward only удаляем // и меняем на forward first;
+		forwarders { 77.88.8.8; }
+закоментить строчку include «/ets/bind/resolvconf-options.conf»;
+allow-query {any; }; нажимаем ‘’esc’’ сохраняем командой wq 
+перезапускаем службу systemctl restart bind 
+создаем зону hq.work и branch work 
+поправляем файл 
+заходим : vim  /etc/bind/local.conf
+Создаем зоны по заданию :
+Zone «hq.work» {
+                                Type master;
+		   File «hq.db»;
+};
+Прописываем зону branch.work 
+Копируем , что писали выше жмем ‘’esc’’  нажимаем ‘’v’’  выделяем жмем ‘’y’’ ставим курсор куда хотим вставить  жмем ‘’esc’’ ‘’p’’
+Zone « branch.work » {
+                                Type master;
+		   File «br.db»;
+};
+
+
+
+
+
+Создаем обратную зону 
+
+Zone «ip адресс задом наперед  in-addr.arpa» {
+                                Type master;
+		   File «revershq.db»;
+};
+
+Zone «ip адресс задом наперед  in-addr.arpa» {
+                                Type master;
+		   File «reversbr.db»;
+};
+Создали две зоны  прямые и обратные , выходим командой wq
+cp /etc/bind/zone/localdomain  /etc/bind/zone/hq.db
+cp /etc/bind/zone/localdomain  /etc/bind/zone/br.db
+cp /etc/bind/zone/127 /etc/bind/zone/revershq.db
+cp /etc/bind/zone/127 /etc/bind/zone/reversbr.db
+cоздадим права на файлы 
+chown root:named /etc/bind/zone/hq.db
+chown root:named /etc/bind/zone/br.db
+chown root:named /etc/bind/zone/reversbr.db
+chown root:named /etc/bind/zone/revershq.db
+задали необходимые права что бы бинд читал данные 
+далее редактируем каждый файл по заданию
+vim /etc/bind/zone/hq.db ентыр
+меняем localhost. Root. Localhost на  hq.work. root. hq.work.
+меняем строчку IN   NS  localhot на  IN   NS  hq.work. 
+самую нижня строчка должна выглядеть так:
+hq-r     IN    A   //указываем ip адрэс в видосе :// 192.168.100.1 //хуй знает правильно или нет//
+ hq-srv  IN    A   //указываем ip адрэс в видосе :// 192.168.100.2 //хуй знает правильно или нет//
+заполнили прямые зоны с буковкой а , выходим и сохр. Командой wq
+Cоздаем обратную зону  на br.db
+vim /etc/bind/zone/br.db ентыр
+меняем localhost. Root. Localhost на  branch.work. root. branch.work.
+меняем строчку IN   NS  localhot на  IN   NS  branch.work.
+самую нижня строчка должна выглядеть так:
+br-r     IN    A   //указываем ip адрэс в видосе :// 172.16.100.1 //хуй знает правильно или нет//
+br-srv     IN    A   //указываем ip адрэс в видосе :// 172.16.100.2 //хуй знает правильно или нет//
+выходим и сохр. Командой wq
+правим для обратной зоны 
+vim /etc/bind/zone/revershq.db ентыр
+меняем localhost. Root. Localhost на  hq.work. root. hq.work.
+меняем строчку IN   NS  localhot на  IN   NS  hq.work. 
+// вначале пишется последний актет// 1  IN  PTR hq-r.hq.work
+// вначале пишется последний актет// 2  IN  PTR hq-srv.hq.work
+выходим и сохр. Командой wq
+vim /etc/bind/zone/reversbr.db ентыр
+меняем localhost. Root. Localhost на  branch.work. root. branch.work.
+IN    NS  branch.work
+// вначале пишется последний актет//   IN    PTR  br-r.branch.work
+Последню строчку удаляем 
+выходим и сохр. Командой wq
+проверяем кфг  named-checkconf -z
+если ошибок нету , перезапускаем ДНС , если все же есть нам пизда
+systemctl restart bind
+проверяем статус 
+systemctl status bind 
+проверяем : host hq-r.hq.work
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
