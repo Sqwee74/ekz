@@ -76,7 +76,7 @@ ping 172.16.100.1
 HQ-R BR-R
 configure
 object-group network LOCAL_NET
-ip address-range 192.168.100.1-192.168.100.62
+ip address-range 192.168.100.1-192.168.100.62 для BR-R 172.16.100.1-172.16.100.1
 exit
 object-group network PUBLIC_POOL
 ip address 1.1.1.2
